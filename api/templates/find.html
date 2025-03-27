@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SymptomAIze</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="header__inner">
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a href="index.html" class="nav-link">Главная</a>
+          </li>
+          <li class="nav-item">
+            <a href="baymax.html" class="nav-link">Baymax</a>
+          </li>
+          <li class="nav-item">
+            <a href="find.html" class="nav-link">Поиск</a>
+          </li>
+          <li class="nav-item">
+            <a href="message.html" class="nav-link">Сообщения</a>
+          </li>
+        </ul>
+        <div class="header-profile">
+          <div class="header-username">Алихан</div>
+          <div class="header-logo"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main class="main">
+    <div class="container">
+      <div class="find__inner">
+        <h2>Найти ближайшие аптеки</h2>
+        <div class="input-container">
+          <button id="getLocation">Получить координаты</button>
+          <p id="coords"></p>
+          <button id="findPharmacies">Найти аптеки</button>
+        </div>
+        <h3>Результаты:</h3>
+        <ul id="pharmacyList"></ul>
+      </div>
+    </div>
+  </main>
+  <script>
+    let latitude = null;
+    let longitude = null;
+
+    document.getElementById('getLocation').addEventListener('click', () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
+          latitude = position.coords.latitude;
+          longitude = position.coords.longitude;
+          document.getElementById('coords').textContent = `Широта: ${latitude}, Долгота: ${longitude}`;
+        }, (error) => {
+          console.error('Ошибка получения местоположения:', error);
+          alert('Не удалось получить местоположение. Пожалуйста, проверьте настройки браузера.');
+        });
+      } else {
+        alert('Ваш браузер не поддерживает геолокацию.');
+      }
+    });
+
+    document.getElementById('findPharmacies').addEventListener('click', async () => {
+      if (latitude === null || longitude === null) {
+        alert('Сначала получите координаты пользователя.');
+        return;
+      }
+
+      try {
+        const response = await fetch('/find-pharmacies/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ latitude, longitude }),
+        });
+
+        const pharmacies = await response.json();
+        const pharmacyList = document.getElementById('pharmacyList');
+        pharmacyList.innerHTML = '';
+
+        pharmacies.forEach(pharmacy => {
+          const listItem = document.createElement('li');
+          listItem.textContent = `${pharmacy.name} (Широта: ${pharmacy.lat}, Долгота: ${pharmacy.lon})`;
+          pharmacyList.appendChild(listItem);
+        });
+      } catch (error) {
+        console.error('Ошибка при поиске аптек:', error);
+      }
+    });
+  </script>
+</body>
+</html>
